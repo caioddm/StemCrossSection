@@ -36,7 +36,9 @@
             this.btnOk = new System.Windows.Forms.Button();
             this.fbdImages = new System.Windows.Forms.FolderBrowserDialog();
             this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
+            this.imboxOriginal = new Emgu.CV.UI.ImageBox();
             ((System.ComponentModel.ISupportInitialize)(this.imboxDisplay)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.imboxOriginal)).BeginInit();
             this.SuspendLayout();
             // 
             // imboxDisplay
@@ -84,11 +86,20 @@
             this.btnOk.UseVisualStyleBackColor = true;
             this.btnOk.Click += new System.EventHandler(this.btnOk_Click);
             // 
+            // imboxOriginal
+            // 
+            this.imboxOriginal.Location = new System.Drawing.Point(45, 110);
+            this.imboxOriginal.Name = "imboxOriginal";
+            this.imboxOriginal.Size = new System.Drawing.Size(1349, 258);
+            this.imboxOriginal.TabIndex = 2;
+            this.imboxOriginal.TabStop = false;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1453, 632);
+            this.Controls.Add(this.imboxOriginal);
             this.Controls.Add(this.btnOk);
             this.Controls.Add(this.btnBrowse);
             this.Controls.Add(this.txtFolder);
@@ -97,6 +108,7 @@
             this.Name = "Form1";
             this.Text = "Form1";
             ((System.ComponentModel.ISupportInitialize)(this.imboxDisplay)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.imboxOriginal)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -111,6 +123,7 @@
         private System.Windows.Forms.Button btnOk;
         private System.Windows.Forms.FolderBrowserDialog fbdImages;
         private System.Windows.Forms.FolderBrowserDialog folderBrowserDialog1;
+        private Emgu.CV.UI.ImageBox imboxOriginal;
     }
 }
 

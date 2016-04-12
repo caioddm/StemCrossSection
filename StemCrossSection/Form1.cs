@@ -55,7 +55,9 @@ namespace StemCrossSection
 
         public void IdentifyContours(Emgu.CV.Image<Bgr, Byte> colorImage)
         {
-
+            imboxOriginal.Image = colorImage;
+            ImageProcessor.FindContours(colorImage, imboxDisplay);
+            /*
             colorImage = colorImage.Resize(0.5, Inter.Linear);
             Image<Gray, Byte> Img_Source_Gray = colorImage.Convert<Gray, Byte>();
             Image<Gray, Byte> mask = Img_Source_Gray.ThresholdBinary(new Gray(90), new Gray(255));
@@ -113,7 +115,7 @@ namespace StemCrossSection
                 Img_Result_Bgr.Draw(circle, new Bgr(Color.Red), 2);
             #endregion
             */
-            imboxDisplay.Image = Img_Result_Bgr;
+            //imboxDisplay.Image = Img_Result_Bgr;
         }
     }
 }
