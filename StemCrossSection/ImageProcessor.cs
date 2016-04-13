@@ -13,6 +13,12 @@ using System.Drawing;
 
 namespace StemCrossSection
 {
+    public class DetectedCircle
+    {
+        public VectorOfPoint contour { get; set; }
+        public Point center { get; set; }
+        public Rectangle boundingRect { get; set; }
+    }
     public class ImageProcessor
     {
         public static void FindContours(Emgu.CV.Image<Bgr, Byte> colorImage, ImageBox imbox)
@@ -22,6 +28,8 @@ namespace StemCrossSection
             Mat hierarchy = new Mat();
 
             /// Detect edges using Threshold
+            Rectangle roi = new Rectangle(0, 50, colorImage.Width, colorImage.Height - 100);
+            colorImage = colorImage.GetSubRect(roi);
             Image<Gray, Byte> Img_Source_Gray = colorImage.Convert<Gray, Byte>();
             Img_Source_Gray = Img_Source_Gray.SmoothBlur(3, 3);
             Image<Gray, Byte> threshold_output = Img_Source_Gray.ThresholdBinary(new Gray(90), new Gray(255));
@@ -48,7 +56,7 @@ namespace StemCrossSection
             for (int i = 0; i < contours.Size; i++)
             {
                 double a = CvInvoke.ContourArea(contours[i], false);
-                if (a > 80000)
+                if (a > 30000)
                 {
                     CvInvoke.ApproxPolyDP(contours[i], contours_poly[circles], 3, true);
                     
@@ -73,16 +81,77 @@ namespace StemCrossSection
 
 
             Img_Result_Bgr = colorImage.And(Img_Result_Bgr);
+            //CvInvoke.DrawContours(Img_Result_Bgr, contours_poly, 0, new MCvScalar(255, 255, 255), -1);
             Image<Gray, Byte> whiteAreas = Img_Result_Bgr.Convert<Gray, Byte>().ThresholdBinary(new Gray(185), new Gray(255));
+            List<DetectedCircle> detectedCircles = new List<DetectedCircle>();
             for (int i = 0; i < circles; i++)
             {
                 CvInvoke.DrawContours(whiteAreas, contours_poly, i, new MCvScalar(255, 255, 255), 3);
+                PointF[] pointfs = Array.ConvertAll(contours_poly[i].ToArray(), input => new PointF(input.X, input.Y));
+                Rectangle boundingRect = PointCollection.BoundingRectangle(pointfs);
+                detectedCircles.Add(
+                    new DetectedCircle()
+                    { contour = contours_poly[i], boundingRect = boundingRect, center = new Point(boundingRect.X + (boundingRect.Width / 2), boundingRect.Y + (boundingRect.Height / 2)) });
                 //MCvScalar color = new MCvScalar(0, 0, 255);
                 //CvInvoke.Rectangle(threshold_output, boundRect[i], color);
                 //CvInvoke.Circle(threshold_output, new Point((int)circle[i].Center.X, (int)circle[i].Center.Y), (int)circle[i].Radius, color);
             }
             /// Show in a window
             imbox.Image = whiteAreas;
+
+
+            detectedCircles = detectedCircles.OrderBy(c => c.center.X).ToList();
+            ComputeMetrics(whiteAreas, detectedCircles, circles);
+        }
+
+        public static decimal[] ComputeMetrics(Image<Gray, Byte> whiteAreas, List<DetectedCircle> detectedCircles, int circles)
+        {
+            decimal[] percentages = new decimal[circles];
+            int[] whitePixelsPerCircle = new int[circles];
+            int[] totalPixelsPerCircle = new int[circles];
+
+            byte[,,] data = whiteAreas.Data;
+            Parallel.For(0, whiteAreas.Rows, i =>
+            {
+                Parallel.For(0, whiteAreas.Cols, j =>
+                {
+                    for (int k = 0; k < circles; k++)
+                    {
+                        double inside = CvInvoke.PointPolygonTest(detectedCircles[k].contour, new PointF(j, i), false);
+                        if (inside >= 0)
+                        {
+                            totalPixelsPerCircle[k]++;
+                            if (data[i, j, 0] != 0)
+                                whitePixelsPerCircle[k]++;
+                        }
+
+                    }
+                });
+            });
+            /*
+            for (int i = whiteAreas.Rows - 1; i >= 0; i--)
+            {
+                for (int j = whiteAreas.Cols - 1; j >= 0; j--)
+                {
+                    for(int k = 0; k < circles; k++)
+                    {
+                        double inside = CvInvoke.PointPolygonTest(detectedCircles[k].contour, new PointF(j, i), false);
+                        if(inside > 0)
+                        {
+                            totalPixelsPerCircle[k]++;
+                            if (data[i, j, 0] != 0)
+                                whitePixelsPerCircle[k]++;
+                        }
+
+                    }
+                }
+            }
+            */
+            for(int i =0; i<circles; i++)
+            {
+                percentages[i] = (decimal)whitePixelsPerCircle[i] / (decimal)totalPixelsPerCircle[i];
+            }
+            return percentages;
         }
     }
 }
