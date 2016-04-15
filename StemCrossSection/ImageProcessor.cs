@@ -80,8 +80,6 @@ namespace StemCrossSection
             Mat hierarchy = new Mat();
 
             /// Detect edges using Threshold
-            Rectangle roi = new Rectangle(0, 50, colorImage.Width, colorImage.Height - 100);
-            colorImage = colorImage.GetSubRect(roi);
             Image<Gray, Byte> Img_Source_Gray = colorImage.Convert<Gray, Byte>();
             Img_Source_Gray = Img_Source_Gray.SmoothBlur(3, 3);
             Image<Gray, Byte> threshold_output = Img_Source_Gray.ThresholdBinary(new Gray(90), new Gray(255));
