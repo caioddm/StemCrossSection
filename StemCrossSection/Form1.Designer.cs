@@ -28,26 +28,14 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
-            this.imboxDisplay = new Emgu.CV.UI.ImageBox();
             this.lblFolder = new System.Windows.Forms.Label();
             this.txtFolder = new System.Windows.Forms.TextBox();
             this.btnBrowse = new System.Windows.Forms.Button();
             this.btnOk = new System.Windows.Forms.Button();
             this.fbdImages = new System.Windows.Forms.FolderBrowserDialog();
             this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
-            this.imboxOriginal = new Emgu.CV.UI.ImageBox();
-            ((System.ComponentModel.ISupportInitialize)(this.imboxDisplay)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.imboxOriginal)).BeginInit();
+            this.txtLog = new System.Windows.Forms.TextBox();
             this.SuspendLayout();
-            // 
-            // imboxDisplay
-            // 
-            this.imboxDisplay.Location = new System.Drawing.Point(43, 374);
-            this.imboxDisplay.Name = "imboxDisplay";
-            this.imboxDisplay.Size = new System.Drawing.Size(1351, 197);
-            this.imboxDisplay.TabIndex = 2;
-            this.imboxDisplay.TabStop = false;
             // 
             // lblFolder
             // 
@@ -86,44 +74,40 @@
             this.btnOk.UseVisualStyleBackColor = true;
             this.btnOk.Click += new System.EventHandler(this.btnOk_Click);
             // 
-            // imboxOriginal
+            // txtLog
             // 
-            this.imboxOriginal.Location = new System.Drawing.Point(45, 110);
-            this.imboxOriginal.Name = "imboxOriginal";
-            this.imboxOriginal.Size = new System.Drawing.Size(1349, 258);
-            this.imboxOriginal.TabIndex = 2;
-            this.imboxOriginal.TabStop = false;
+            this.txtLog.Location = new System.Drawing.Point(45, 104);
+            this.txtLog.Multiline = true;
+            this.txtLog.Name = "txtLog";
+            this.txtLog.ReadOnly = true;
+            this.txtLog.Size = new System.Drawing.Size(452, 173);
+            this.txtLog.TabIndex = 7;
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1453, 632);
-            this.Controls.Add(this.imboxOriginal);
+            this.ClientSize = new System.Drawing.Size(854, 349);
+            this.Controls.Add(this.txtLog);
             this.Controls.Add(this.btnOk);
             this.Controls.Add(this.btnBrowse);
             this.Controls.Add(this.txtFolder);
             this.Controls.Add(this.lblFolder);
-            this.Controls.Add(this.imboxDisplay);
             this.Name = "Form1";
-            this.Text = "Form1";
-            ((System.ComponentModel.ISupportInitialize)(this.imboxDisplay)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.imboxOriginal)).EndInit();
+            this.Text = "CrossSecCalculator";
             this.ResumeLayout(false);
             this.PerformLayout();
 
         }
 
         #endregion
-
-        private Emgu.CV.UI.ImageBox imboxDisplay;
         private System.Windows.Forms.Label lblFolder;
         private System.Windows.Forms.TextBox txtFolder;
         private System.Windows.Forms.Button btnBrowse;
         private System.Windows.Forms.Button btnOk;
         private System.Windows.Forms.FolderBrowserDialog fbdImages;
         private System.Windows.Forms.FolderBrowserDialog folderBrowserDialog1;
-        private Emgu.CV.UI.ImageBox imboxOriginal;
+        private System.Windows.Forms.TextBox txtLog;
     }
 }
 
