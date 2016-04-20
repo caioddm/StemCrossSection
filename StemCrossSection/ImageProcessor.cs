@@ -114,31 +114,58 @@ namespace StemCrossSection
             }
 
             /// Draw polygonal contour + bonding rects + circles
-            Image<Bgr, byte> Img_Result_Bgr = new Image<Bgr, byte>(Img_Source_Gray.Width, Img_Source_Gray.Height);
+            Image<Gray, byte> filteredImage = new Image<Gray, byte>(Img_Source_Gray.Width, Img_Source_Gray.Height);
             for (int i = 0; i < circles; i++)
             {
-                CvInvoke.DrawContours(Img_Result_Bgr, contours_poly, i, new MCvScalar(255, 255, 255), -1);
+                CvInvoke.DrawContours(filteredImage, contours_poly, i, new MCvScalar(255, 255, 255), -1);
             }
 
 
-            Img_Result_Bgr = colorImage.And(Img_Result_Bgr);
-            Image<Gray, Byte> whiteAreas = Img_Result_Bgr.Convert<Gray, Byte>().ThresholdBinary(new Gray(185), new Gray(255));
+            filteredImage = colorImage.Convert<Gray, Byte>().And(filteredImage);
+            Image<Gray, Byte> whiteAreas = new Image<Gray, byte>(filteredImage.Width, filteredImage.Height);
             List<DetectedCircle> detectedCircles = new List<DetectedCircle>();
             for (int i = 0; i < circles; i++)
-            {
-                CvInvoke.DrawContours(whiteAreas, contours_poly, i, new MCvScalar(255, 255, 255), 3);
+            {                
                 PointF[] pointfs = Array.ConvertAll(contours_poly[i].ToArray(), input => new PointF(input.X, input.Y));
                 Rectangle boundingRect = PointCollection.BoundingRectangle(pointfs);
                 detectedCircles.Add(
                     new DetectedCircle()
                     { contour = contours_poly[i], boundingRect = boundingRect, center = new Point(boundingRect.X + (boundingRect.Width / 2), boundingRect.Y + (boundingRect.Height / 2)) });
+                filteredImage.ROI = boundingRect;
+                Gray avg = filteredImage.GetAverage();
+                filteredImage.ROI = Rectangle.Empty;
+                int threshold = _ComputeThreshold(avg);
+                Image<Gray, Byte> mask = new Image<Gray, byte>(filteredImage.Width, filteredImage.Height);
+                mask.Draw(boundingRect, new Gray(255), -1);
+                mask = filteredImage.And(mask);
+                mask = mask.ThresholdBinary(new Gray(threshold), new Gray(255));
+                whiteAreas = whiteAreas.Or(mask);
+                CvInvoke.DrawContours(whiteAreas, contours_poly, i, new MCvScalar(255, 255, 255), 3);
             }
 
 
             detectedCircles = detectedCircles.OrderBy(c => c.center.X).ToList();
-            //CvInvoke.Circle(whiteAreas, detectedCircles[0].center, detectedCircles[0].boundingRect.Width / 4, new MCvScalar(255, 255, 255), -1);
             processedImage = whiteAreas;
             return _ComputeMetrics(whiteAreas, detectedCircles, circles);
+        }
+
+        private int _ComputeThreshold(Gray avgPixel)
+        {
+
+            //y = 1.0042x + 61.03
+            return (int)(1.0042 * avgPixel.Intensity + 61.03);
+            /*if (avgPixel.Intensity >= 115)
+                return 185;
+            else if (avgPixel.Intensity >= 105)
+                return 180;
+            else if (avgPixel.Intensity >= 95)
+                return 175;
+            else if (avgPixel.Intensity >= 85)
+                return 170;
+            else if (avgPixel.Intensity >= 75)
+                return 165;
+            else
+                return 160;*/
         }
 
         private decimal[] _ComputeMetrics(Image<Gray, Byte> whiteAreas, List<DetectedCircle> detectedCircles, int circles)
