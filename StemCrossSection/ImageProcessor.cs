@@ -20,17 +20,28 @@ namespace StemCrossSection
         public Point center { get; set; }
         public Rectangle boundingRect { get; set; }
     }
+
+    public enum EThresholdModel
+    {
+        Model0,
+        Model1,//Threshold = 5.7 + 0.6136*mean + 0.6083*max - 0.936*sd - 0.2385*min
+        Model2, //Threshold = 0.6210*mean + 0.6431*max - 1.005*sd - 0.2508*min
+        Model4, //Threshold = 48.74 + mean*0.4726 + max*0.3060
+        Model5, //Threshold = 83.97 + 0.7667*mean
+    }
     public class ImageProcessor
     {
+        public EThresholdModel ThresholdModel { get; set; }
         public String ImagesFolder { get; set; }
         public String[] Extensions { get; set; }
         public String OutputFile { get { return string.Concat(ImagesFolder, "\\", "output.csv"); } }
         public TextBox TxtLog { get; set; }
 
-        public ImageProcessor(String folder, System.Windows.Forms.TextBox txtLog, params String[] extensions)
+        public ImageProcessor(String folder, System.Windows.Forms.TextBox txtLog, EThresholdModel thresholdModel, params String[] extensions)
         {
             this.TxtLog = txtLog;
             this.ImagesFolder = folder;
+            this.ThresholdModel = thresholdModel;
             if (extensions.Length > 0)
                 this.Extensions = extensions;
         }
@@ -114,32 +125,32 @@ namespace StemCrossSection
             }
 
             /// Draw polygonal contour + bonding rects + circles
-            Image<Gray, byte> filteredImage = new Image<Gray, byte>(Img_Source_Gray.Width, Img_Source_Gray.Height);
+            Image<Bgr, byte> filteredImage = new Image<Bgr, byte>(Img_Source_Gray.Width, Img_Source_Gray.Height);
             for (int i = 0; i < circles; i++)
             {
                 CvInvoke.DrawContours(filteredImage, contours_poly, i, new MCvScalar(255, 255, 255), -1);
             }
 
 
-            filteredImage = colorImage.Convert<Gray, Byte>().And(filteredImage);
+            filteredImage = colorImage.And(filteredImage);
             Image<Gray, Byte> whiteAreas = new Image<Gray, byte>(filteredImage.Width, filteredImage.Height);
             List<DetectedCircle> detectedCircles = new List<DetectedCircle>();
             for (int i = 0; i < circles; i++)
             {                
                 PointF[] pointfs = Array.ConvertAll(contours_poly[i].ToArray(), input => new PointF(input.X, input.Y));
                 Rectangle boundingRect = PointCollection.BoundingRectangle(pointfs);
-                detectedCircles.Add(
-                    new DetectedCircle()
-                    { contour = contours_poly[i], boundingRect = boundingRect, center = new Point(boundingRect.X + (boundingRect.Width / 2), boundingRect.Y + (boundingRect.Height / 2)) });
+                DetectedCircle detectedCircle = new DetectedCircle()
+                { contour = contours_poly[i], boundingRect = boundingRect, center = new Point(boundingRect.X + (boundingRect.Width / 2), boundingRect.Y + (boundingRect.Height / 2)) };
+                detectedCircles.Add(detectedCircle);
                 filteredImage.ROI = boundingRect;
-                Gray avg = filteredImage.GetAverage();
+                int threshold = _ComputeThreshold(filteredImage, detectedCircle);   
                 filteredImage.ROI = Rectangle.Empty;
-                int threshold = _ComputeThreshold(avg);
-                Image<Gray, Byte> mask = new Image<Gray, byte>(filteredImage.Width, filteredImage.Height);
-                mask.Draw(boundingRect, new Gray(255), -1);
+                Image<Bgr, Byte> mask = new Image<Bgr, byte>(filteredImage.Width, filteredImage.Height);
+                mask.Draw(boundingRect, new Bgr(255, 255, 255), -1);
                 mask = filteredImage.And(mask);
-                mask = mask.ThresholdBinary(new Gray(threshold), new Gray(255));
-                whiteAreas = whiteAreas.Or(mask);
+                /* Extract white are solely based on the Blue channel */
+                mask = mask.ThresholdBinary(new Bgr(threshold, 0, 0), new Bgr(255, 0, 0));                
+                whiteAreas = whiteAreas.Or(mask.Convert<Gray, Byte>().ThresholdBinary(new Gray(10), new Gray(255)));
                 CvInvoke.DrawContours(whiteAreas, contours_poly, i, new MCvScalar(255, 255, 255), 3);
             }
 
@@ -149,23 +160,63 @@ namespace StemCrossSection
             return _ComputeMetrics(whiteAreas, detectedCircles, circles);
         }
 
-        private int _ComputeThreshold(Gray avgPixel)
+        private float[] _ComputeHistogram(Image<Bgr, Byte> filteredImage, DetectedCircle detectedCircle)
         {
+            float[] hist = new float[256];
 
-            //y = 1.0042x + 61.03
-            return (int)(1.0042 * avgPixel.Intensity + 61.03);
-            /*if (avgPixel.Intensity >= 115)
-                return 185;
-            else if (avgPixel.Intensity >= 105)
-                return 180;
-            else if (avgPixel.Intensity >= 95)
-                return 175;
-            else if (avgPixel.Intensity >= 85)
-                return 170;
-            else if (avgPixel.Intensity >= 75)
-                return 165;
+            byte[,,] data = filteredImage.Data;
+            Parallel.For(filteredImage.ROI.Y, filteredImage.ROI.Y + filteredImage.Rows, i =>
+            {
+                Parallel.For(filteredImage.ROI.X, filteredImage.ROI.X + filteredImage.Cols, j =>
+                {
+                    double inside = CvInvoke.PointPolygonTest(detectedCircle.contour, new PointF(j, i), false);
+                    if (inside >= 0)
+                    {
+                        hist[data[i, j, 0]]++;
+                    }
+                });
+            });
+
+            return hist;
+
+        }
+
+        private int _ComputeThreshold(Image<Bgr, Byte> filteredImage, DetectedCircle circle)
+        {
+            float min, max;
+            //Gray avg;
+            //MCvScalar sdv;
+            //filteredImageWithROI.AvgSdv(out avg, out sdv);
+            //DenseHistogram histo = new DenseHistogram(256, new RangeF(0, 256));
+
+            //histo.Calculate(new Image<Gray, Byte>[] { filteredImageWithROI }, true, null);
+            float[] grayHist = _ComputeHistogram(filteredImage, circle);//histo.GetBinValues();
+            //grayHist = grayHist.Skip(20).ToArray(); //discard the black pixels of the borders
+
+            double avg = 0;
+            double numPixels = 0;
+            for (int i = 0; i < grayHist.Length; i++)
+            {
+                numPixels += grayHist[i];
+                avg += (i) * grayHist[i];
+            }
+            avg = avg / numPixels;
+            double sumOfSquaresOfDifferences = grayHist.Select(val => (val - avg) * (val - avg)).Sum();
+            double sd = Math.Sqrt(sumOfSquaresOfDifferences / numPixels);
+
+            min = Array.FindIndex(grayHist, b => b > 0);
+            max = 255 - Array.FindIndex(grayHist.Reverse().ToArray(), b => b > 0);
+
+            if (ThresholdModel == EThresholdModel.Model0)
+                return (int)(-30.2529255 + 0.4451667 * avg - 0.1759019 * min + 0.9173600 * max - 1.2452913 * sd);
+            else if (ThresholdModel == EThresholdModel.Model1)
+                return (int)(5.7 + 0.6136 * avg + 0.6083 * max - 0.936 * sd - 0.2385 * min);
+            else if (ThresholdModel == EThresholdModel.Model2)
+                return (int)(0.6210 * avg + 0.6431 * max - 1.005 * sd - 0.2508 * min);
+            else if (ThresholdModel == EThresholdModel.Model4)
+                return (int)(48.74 + avg * 0.4726 + max * 0.3060);
             else
-                return 160;*/
+                return (int)(83.97 + 0.7667 * avg);
         }
 
         private decimal[] _ComputeMetrics(Image<Gray, Byte> whiteAreas, List<DetectedCircle> detectedCircles, int circles)

@@ -36,7 +36,8 @@ namespace StemCrossSection
         {
             String searchFolder = txtFolder.Text;
             var filters = new String[] { "jpg", "jpeg", "png", "gif", "tiff", "bmp" };
-            ImageProcessor imgProc = new ImageProcessor(searchFolder, txtLog, filters);
+            EThresholdModel thresholdModel = rdbModel1.Checked ? EThresholdModel.Model1 : (rdbModel2.Checked ? EThresholdModel.Model2 : (rdbModel4.Checked ? EThresholdModel.Model4 : (rdbModel5.Checked ? EThresholdModel.Model5 : EThresholdModel.Model0)));
+            ImageProcessor imgProc = new ImageProcessor(searchFolder, txtLog, thresholdModel, filters);
             imgProc.ProcessImages();
         }        
     }
