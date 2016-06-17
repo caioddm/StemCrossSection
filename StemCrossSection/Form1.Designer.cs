@@ -35,12 +35,9 @@
             this.fbdImages = new System.Windows.Forms.FolderBrowserDialog();
             this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
             this.txtLog = new System.Windows.Forms.TextBox();
-            this.rdbModel1 = new System.Windows.Forms.RadioButton();
             this.rdbModel2 = new System.Windows.Forms.RadioButton();
             this.grbThreshold = new System.Windows.Forms.GroupBox();
-            this.rdbModel5 = new System.Windows.Forms.RadioButton();
-            this.rdbModel4 = new System.Windows.Forms.RadioButton();
-            this.rdbModel0 = new System.Windows.Forms.RadioButton();
+            this.rdbModel1 = new System.Windows.Forms.RadioButton();
             this.grbThreshold.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -90,75 +87,38 @@
             this.txtLog.Size = new System.Drawing.Size(452, 173);
             this.txtLog.TabIndex = 7;
             // 
-            // rdbModel1
-            // 
-            this.rdbModel1.AutoSize = true;
-            this.rdbModel1.Enabled = false;
-            this.rdbModel1.Location = new System.Drawing.Point(6, 54);
-            this.rdbModel1.Name = "rdbModel1";
-            this.rdbModel1.Size = new System.Drawing.Size(112, 17);
-            this.rdbModel1.TabIndex = 8;
-            this.rdbModel1.Text = "Threshold model 1";
-            this.rdbModel1.UseVisualStyleBackColor = true;
-            // 
             // rdbModel2
             // 
             this.rdbModel2.AutoSize = true;
-            this.rdbModel2.Enabled = false;
-            this.rdbModel2.Location = new System.Drawing.Point(6, 77);
+            this.rdbModel2.Location = new System.Drawing.Point(6, 54);
             this.rdbModel2.Name = "rdbModel2";
             this.rdbModel2.Size = new System.Drawing.Size(112, 17);
-            this.rdbModel2.TabIndex = 9;
+            this.rdbModel2.TabIndex = 8;
             this.rdbModel2.Text = "Threshold model 2";
             this.rdbModel2.UseVisualStyleBackColor = true;
             // 
             // grbThreshold
             // 
-            this.grbThreshold.Controls.Add(this.rdbModel5);
-            this.grbThreshold.Controls.Add(this.rdbModel4);
-            this.grbThreshold.Controls.Add(this.rdbModel0);
             this.grbThreshold.Controls.Add(this.rdbModel1);
             this.grbThreshold.Controls.Add(this.rdbModel2);
             this.grbThreshold.Location = new System.Drawing.Point(519, 104);
             this.grbThreshold.Name = "grbThreshold";
-            this.grbThreshold.Size = new System.Drawing.Size(200, 154);
+            this.grbThreshold.Size = new System.Drawing.Size(200, 83);
             this.grbThreshold.TabIndex = 10;
             this.grbThreshold.TabStop = false;
             this.grbThreshold.Text = "Select threshold model";
             // 
-            // rdbModel5
+            // rdbModel1
             // 
-            this.rdbModel5.AutoSize = true;
-            this.rdbModel5.Enabled = false;
-            this.rdbModel5.Location = new System.Drawing.Point(6, 123);
-            this.rdbModel5.Name = "rdbModel5";
-            this.rdbModel5.Size = new System.Drawing.Size(112, 17);
-            this.rdbModel5.TabIndex = 12;
-            this.rdbModel5.Text = "Threshold model 5";
-            this.rdbModel5.UseVisualStyleBackColor = true;
-            // 
-            // rdbModel4
-            // 
-            this.rdbModel4.AutoSize = true;
-            this.rdbModel4.Enabled = false;
-            this.rdbModel4.Location = new System.Drawing.Point(6, 100);
-            this.rdbModel4.Name = "rdbModel4";
-            this.rdbModel4.Size = new System.Drawing.Size(112, 17);
-            this.rdbModel4.TabIndex = 11;
-            this.rdbModel4.Text = "Threshold model 4";
-            this.rdbModel4.UseVisualStyleBackColor = true;
-            // 
-            // rdbModel0
-            // 
-            this.rdbModel0.AutoSize = true;
-            this.rdbModel0.Checked = true;
-            this.rdbModel0.Location = new System.Drawing.Point(6, 31);
-            this.rdbModel0.Name = "rdbModel0";
-            this.rdbModel0.Size = new System.Drawing.Size(112, 17);
-            this.rdbModel0.TabIndex = 10;
-            this.rdbModel0.TabStop = true;
-            this.rdbModel0.Text = "Threshold model 0";
-            this.rdbModel0.UseVisualStyleBackColor = true;
+            this.rdbModel1.AutoSize = true;
+            this.rdbModel1.Checked = true;
+            this.rdbModel1.Location = new System.Drawing.Point(6, 31);
+            this.rdbModel1.Name = "rdbModel1";
+            this.rdbModel1.Size = new System.Drawing.Size(112, 17);
+            this.rdbModel1.TabIndex = 10;
+            this.rdbModel1.TabStop = true;
+            this.rdbModel1.Text = "Threshold model 1";
+            this.rdbModel1.UseVisualStyleBackColor = true;
             // 
             // Form1
             // 
@@ -188,12 +148,9 @@
         private System.Windows.Forms.FolderBrowserDialog fbdImages;
         private System.Windows.Forms.FolderBrowserDialog folderBrowserDialog1;
         private System.Windows.Forms.TextBox txtLog;
-        private System.Windows.Forms.RadioButton rdbModel1;
         private System.Windows.Forms.RadioButton rdbModel2;
         private System.Windows.Forms.GroupBox grbThreshold;
-        private System.Windows.Forms.RadioButton rdbModel0;
-        private System.Windows.Forms.RadioButton rdbModel5;
-        private System.Windows.Forms.RadioButton rdbModel4;
+        private System.Windows.Forms.RadioButton rdbModel1;
     }
 }
 

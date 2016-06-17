@@ -23,11 +23,11 @@ namespace StemCrossSection
 
     public enum EThresholdModel
     {
-        Model0,
-        Model1,//Threshold = 5.7 + 0.6136*mean + 0.6083*max - 0.936*sd - 0.2385*min
-        Model2, //Threshold = 0.6210*mean + 0.6431*max - 1.005*sd - 0.2508*min
+        Model1, // 0.6257849*Mean + 0.5013893*Max
+        Model2, //10.7573408 + 0.6273262*Mean + 0.4531369*Max
+        /*Model2, //Threshold = 0.6210*mean + 0.6431*max - 1.005*sd - 0.2508*min
         Model4, //Threshold = 48.74 + mean*0.4726 + max*0.3060
-        Model5, //Threshold = 83.97 + 0.7667*mean
+        Model5, //Threshold = 83.97 + 0.7667*mean*/
     }
     public class ImageProcessor
     {
@@ -63,8 +63,8 @@ namespace StemCrossSection
             {
                 _LogProgress(imgPath);
                 Image<Bgr, Byte> img = new Image<Bgr, Byte>(imgPath);
-                Image<Gray, Byte> procImg;                
-                decimal[] results = _FindContoursAndCalculate(img, out procImg);
+                Image<Gray, Byte> procImg;
+                Dictionary<int, KeyValuePair<decimal, decimal>> results = _FindContoursAndCalculate(img, out procImg);
                 _WriteToCSV(imgPath, results);
                 _WriteProcImage(imgPath, procImg);                
             }
@@ -84,7 +84,7 @@ namespace StemCrossSection
                 TxtLog.AppendText("DONE!");
         }
 
-        private decimal[] _FindContoursAndCalculate(Emgu.CV.Image<Bgr, Byte> colorImage, out Emgu.CV.Image<Gray, Byte> processedImage)
+        private Dictionary<int, KeyValuePair<decimal, decimal>> _FindContoursAndCalculate(Emgu.CV.Image<Bgr, Byte> colorImage, out Emgu.CV.Image<Gray, Byte> processedImage)
         {
             int circles = 0;
             VectorOfVectorOfPoint contours = new VectorOfVectorOfPoint();
@@ -125,14 +125,14 @@ namespace StemCrossSection
             }
 
             /// Draw polygonal contour + bonding rects + circles
-            Image<Bgr, byte> filteredImage = new Image<Bgr, byte>(Img_Source_Gray.Width, Img_Source_Gray.Height);
+            Image<Gray, byte> filteredImage = new Image<Gray, byte>(Img_Source_Gray.Width, Img_Source_Gray.Height);
             for (int i = 0; i < circles; i++)
             {
                 CvInvoke.DrawContours(filteredImage, contours_poly, i, new MCvScalar(255, 255, 255), -1);
             }
 
 
-            filteredImage = colorImage.And(filteredImage);
+            filteredImage = colorImage.Convert<Gray, Byte>().And(filteredImage);
             Image<Gray, Byte> whiteAreas = new Image<Gray, byte>(filteredImage.Width, filteredImage.Height);
             List<DetectedCircle> detectedCircles = new List<DetectedCircle>();
             for (int i = 0; i < circles; i++)
@@ -145,11 +145,11 @@ namespace StemCrossSection
                 filteredImage.ROI = boundingRect;
                 int threshold = _ComputeThreshold(filteredImage, detectedCircle);   
                 filteredImage.ROI = Rectangle.Empty;
-                Image<Bgr, Byte> mask = new Image<Bgr, byte>(filteredImage.Width, filteredImage.Height);
-                mask.Draw(boundingRect, new Bgr(255, 255, 255), -1);
+                Image<Gray, Byte> mask = new Image<Gray, byte>(filteredImage.Width, filteredImage.Height);
+                mask.Draw(boundingRect, new Gray(255), -1);
                 mask = filteredImage.And(mask);
                 /* Extract white are solely based on the Blue channel */
-                mask = mask.ThresholdBinary(new Bgr(threshold, 0, 0), new Bgr(255, 0, 0));                
+                mask = mask.ThresholdBinary(new Gray(threshold), new Gray(255));                
                 whiteAreas = whiteAreas.Or(mask.Convert<Gray, Byte>().ThresholdBinary(new Gray(10), new Gray(255)));
                 CvInvoke.DrawContours(whiteAreas, contours_poly, i, new MCvScalar(255, 255, 255), 3);
             }
@@ -160,7 +160,7 @@ namespace StemCrossSection
             return _ComputeMetrics(whiteAreas, detectedCircles, circles);
         }
 
-        private float[] _ComputeHistogram(Image<Bgr, Byte> filteredImage, DetectedCircle detectedCircle)
+        private float[] _ComputeHistogram(Image<Gray, Byte> filteredImage, DetectedCircle detectedCircle)
         {
             float[] hist = new float[256];
 
@@ -181,7 +181,7 @@ namespace StemCrossSection
 
         }
 
-        private int _ComputeThreshold(Image<Bgr, Byte> filteredImage, DetectedCircle circle)
+        private int _ComputeThreshold(Image<Gray, Byte> filteredImage, DetectedCircle circle)
         {
             float min, max;
             //Gray avg;
@@ -207,20 +207,21 @@ namespace StemCrossSection
             min = Array.FindIndex(grayHist, b => b > 0);
             max = 255 - Array.FindIndex(grayHist.Reverse().ToArray(), b => b > 0);
 
-            if (ThresholdModel == EThresholdModel.Model0)
-                return (int)(-30.2529255 + 0.4451667 * avg - 0.1759019 * min + 0.9173600 * max - 1.2452913 * sd);
-            else if (ThresholdModel == EThresholdModel.Model1)
-                return (int)(5.7 + 0.6136 * avg + 0.6083 * max - 0.936 * sd - 0.2385 * min);
-            else if (ThresholdModel == EThresholdModel.Model2)
+            if (ThresholdModel == EThresholdModel.Model1)
+                return (int)(0.6257849 * avg + 0.5013893 * max);
+            else
+                return (int)(10.7573408 + 0.6273262 * avg + 0.4531369 * max);
+            /*else if (ThresholdModel == EThresholdModel.Model2)
                 return (int)(0.6210 * avg + 0.6431 * max - 1.005 * sd - 0.2508 * min);
             else if (ThresholdModel == EThresholdModel.Model4)
                 return (int)(48.74 + avg * 0.4726 + max * 0.3060);
             else
-                return (int)(83.97 + 0.7667 * avg);
+                return (int)(83.97 + 0.7667 * avg);*/
         }
 
-        private decimal[] _ComputeMetrics(Image<Gray, Byte> whiteAreas, List<DetectedCircle> detectedCircles, int circles)
+        private Dictionary<int, KeyValuePair<decimal, decimal>> _ComputeMetrics(Image<Gray, Byte> whiteAreas, List<DetectedCircle> detectedCircles, int circles)
         {
+            Dictionary<int, KeyValuePair<decimal, decimal>> results = new Dictionary<int, KeyValuePair<decimal, decimal>>();
             decimal[] percentages = new decimal[circles];
             int[] whitePixelsPerCircle = new int[circles];
             int[] totalPixelsPerCircle = new int[circles];
@@ -248,18 +249,20 @@ namespace StemCrossSection
             for (int i = 0; i < circles; i++)
             {
                 percentages[i] = (decimal)whitePixelsPerCircle[i] / (decimal)totalPixelsPerCircle[i];
+                results.Add(i, new KeyValuePair<decimal, decimal>(totalPixelsPerCircle[i], percentages[i]));
             }
-            return percentages;
+            return results;
         }
 
-        private void _WriteToCSV(string fileName, decimal[] results)
+        private void _WriteToCSV(string fileName, Dictionary<int, KeyValuePair<decimal, decimal>> results)
         {
 
             var csv = new StringBuilder();
             csv.Append(fileName);
-            for (int i = 0; i < results.Length; i++)
+            for (int i = 0; i < results.Keys.Count; i++)
             {
-                csv.Append(string.Concat(",", results[i]));
+                csv.Append(string.Concat(",", results[i].Key));
+                csv.Append(string.Concat(",", results[i].Value));
             }
             csv.AppendLine();
 
